@@ -2,7 +2,7 @@
 // the entire reason I wanted to make this app in the first place). Also shows
 // various game info like sharing bonus.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useClock from "../../hooks/useClock";
 
 type TimerState = "ready" | "running" | "paused" | "done";
@@ -29,9 +29,6 @@ const clockify = (millis: number): { minutes: number; seconds: number } => {
   }
 };
 
-const setTimoutAt = (body: () => void, deadline: number) =>
-  setTimeout(body, deadline - Date.now());
-
 const integerSecondsFormatter = new Intl.NumberFormat("en-US", {
   minimumIntegerDigits: 2,
   maximumFractionDigits: 0,
@@ -44,19 +41,18 @@ const floatSecondsFormatter = new Intl.NumberFormat("en-US", {
 });
 
 const Trade = ({
-  sharingBonus,
-  zengiiSharingBonus,
   timeLimit,
   onFinished,
+  roundLabel,
 }: {
-  sharingBonus: number;
-  zengiiSharingBonus?: number;
-
   // How much time in the trading phase, in millis
   timeLimit: number;
 
   // Function to be called when the trading phase is complete
   onFinished: () => void;
+
+  // The round number (1 - 6)
+  roundLabel: number;
 }) => {
   const [state, setTimerState] = useState<TimerState>("ready");
 
@@ -71,32 +67,26 @@ const Trade = ({
   // Call this to start or resume the timer counting down. The rendered UI
   // should take care to make it impossible to call this if the timer is in
   // the running or done states
-  const startTimer =
-    state === "paused" || state === "ready"
-      ? () => {
-          const now = Date.now();
+  const startTimer = useCallback(() => {
+    const now = Date.now();
 
-          setTimerStartedAt(now);
-          setTimerState("running");
-        }
-      : () => {};
+    setTimerStartedAt(now);
+    setTimerState("running");
+  }, []);
 
-  const pauseTimer =
-    state === "running"
-      ? () => {
-          const now = Date.now();
-          const elapsed = now - timerStartedAt;
+  const pauseTimer = useCallback(() => {
+    const now = Date.now();
+    const elapsed = now - timerStartedAt;
 
-          setStaticTimeElapsed((original) => original + elapsed);
-          setTimerState("paused");
-        }
-      : () => {};
+    setStaticTimeElapsed((original) => original + elapsed);
+    setTimerState("paused");
+  }, [timerStartedAt]);
 
   // Call this when the timer expires, or when the player skips to the end of
   // the phase
-  const completeTimer = () => {
+  const completeTimer = useCallback(() => {
     setTimerState("done");
-  };
+  }, []);
 
   // This effect controls the transition to the done state when the timer
   // expires
@@ -125,18 +115,14 @@ const Trade = ({
 
   const { minutes, seconds } = clockify(timeRemaining);
 
-  const title =
-    state === "ready" || state === "running"
-      ? "Trading Phase"
-      : state === "paused"
-      ? "Trading Phase (Paused)"
-      : state === "done"
-      ? "Trading Phase (Complete)"
-      : assertNever(state);
+  const buttons = [];
 
   return (
     <div>
-      <h1 className="phase-title">{title}</h1>
+      <h1 className="phase-title">
+        Round {roundLabel} Trading Phase
+        {state === "paused" ? "(Paused)" : state === "done" ? "(Complete)" : ""}
+      </h1>
       {minutes > 0 ? (
         <div id="clock">
           <span key="minutes" id="minutes">
