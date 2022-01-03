@@ -1,0 +1,40 @@
+main.main-menu h1 {
+  font-size: 3rem;
+  text-align: center;
+}
+
+main.main-menu h2 {
+  font-size: 2rem;
+  text-align: center;
+}
+
+#main-menu-buttons {
+  display: flex;
+  flex-direction: column;
+}
+
+#new-game-buttons,
+#timer-settings-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.main-menu-button {
+  flex: 1;
+  margin: 5pt;
+  padding: 1.5em;
+  font-size: 1.25rem;
+  background-color: transparent;
+  color: white;
+  border-radius: 20px;
+  border: medium solid lightgray;
+}
+
+.main-menu-button-active {
+  border: rgb(29, 194, 29) medium solid;
+}
+
+.main-menu-button:hover {
+  background-color: #ffffff20;
+}

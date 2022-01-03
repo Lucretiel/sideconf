@@ -3,13 +3,12 @@
 // various game info like sharing bonus.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { start } from "repl";
+import assertNever from "../../assertNever";
 import useClock from "../../hooks/useClock";
+import "./Trade.css";
 
 type TimerState = "ready" | "running" | "paused" | "done";
-
-const assertNever = (n: never): never => {
-  return n;
-};
 
 // Given some number of milliseconds, like 61000, return a wall clock, like
 // {minutes: 1, seconds: 1}. If the minutes component is not 0, the seconds
@@ -36,8 +35,8 @@ const integerSecondsFormatter = new Intl.NumberFormat("en-US", {
 
 const floatSecondsFormatter = new Intl.NumberFormat("en-US", {
   minimumIntegerDigits: 1,
-  minimumFractionDigits: 3,
-  maximumFractionDigits: 3,
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
 });
 
 const Trade = ({
@@ -88,18 +87,21 @@ const Trade = ({
     setTimerState("done");
   }, []);
 
-  // This effect controls the transition to the done state when the timer
-  // expires
+  // This effect controls the transition to the done state (and the sounding
+  // of the alarm) when the timer expires
   useEffect(() => {
     if (state === "running") {
       const timeRemaining = timeLimit - staticTimeElapsed;
-      const id = setTimeout(() => setTimerState("done"), timeRemaining);
+      const id = setTimeout(() => {
+        // TODO: Make some noise here
+        setTimerState("done");
+      }, timeRemaining);
       return () => clearTimeout(id);
     }
   }, [state, timeLimit, staticTimeElapsed]);
 
   // The current time
-  const now = useClock(state === "running" ? 25 : null);
+  const now = useClock(state === "running" ? 50 : null);
 
   // Compute time remaining
   const timeRemaining =
@@ -140,6 +142,7 @@ const Trade = ({
           </span>
         </div>
       )}
+      <button onClick={startTimer}>Start</button>
     </div>
   );
 };

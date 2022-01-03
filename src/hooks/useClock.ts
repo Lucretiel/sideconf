@@ -1,25 +1,19 @@
 import { useEffect, useState } from "react";
 
-// Hook for a ticking clock. Returns the current Date.now() at the moment the
-// hook is called, and triggers a re-render (with an updated current timestamp)
-// every `interval` millis.
-//
-// If `interval` is `null`, the clock doesn't tick.
-//
-// The clock will refresh instantly if the interval changes.
+// Hook for a ticking clock. Every time this hook is evaluated, it returns the
+// current time. In addition, it sets up an effect that causes the component
+// to re-render every `interval` ms, if given.
 const useClock = (interval: number | null): number => {
-  const [now, setNow] = useState(() => Date.now());
+  const [ticker, setTicker] = useState(0);
 
   useEffect(() => {
-    setNow(Date.now());
-
     if (interval !== null) {
-      const intervalId = setInterval(() => setNow(Date.now()), interval);
+      const intervalId = setInterval(() => setTicker((i) => i + 1), interval);
       return () => clearInterval(intervalId);
     }
   }, [interval]);
 
-  return now;
+  return Date.now();
 };
 
 export default useClock;
