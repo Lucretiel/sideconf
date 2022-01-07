@@ -1,20 +1,26 @@
+import { round } from "lodash";
 import { useCallback, useState } from "react";
+import assertNever from "../../assertNever";
 import {
   PlayerCount,
   getSharingBonuses,
-  playerCounts,
-} from "../../rules/player_counts";
+  FactionSet,
+  TradeTimeLimit,
+} from "../../rules";
+import ConfluencePhase from "./ConfluencePhase";
+import EconomyPhase from "./EconomyPhase";
 import TechSharingDisplay from "./TechSharingDisplay";
-import Trade from "./Trade";
+import TradePhase from "./TradePhase";
 
 type Phase = "trade" | "economy" | "confluence";
 
+const getRoundLabel = (roundIndex: number, maxRounds: number) =>
+  roundIndex + 1 >= maxRounds ? "Final" : `Round ${roundIndex + 1}`;
+
 // Top level component for a game in progress.
 const Game = (props: {
-  playerCount: PlayerCount;
-  hasYengii: boolean;
-  hasZeth: boolean;
-  timeLimit: number;
+  factions: FactionSet;
+  timeLimit: TradeTimeLimit;
   onGameFinished: () => void;
 }) => {
   const [roundIndex, setRoundIndex] = useState(0);
@@ -29,21 +35,37 @@ const Game = (props: {
     setRoundIndex((round) => round + 1);
   }, []);
 
-  const bonuses = getSharingBonuses(props.playerCount);
+  const bonuses = getSharingBonuses(props.factions.size);
   const currentRoundBonuses = bonuses[roundIndex];
+
+  const roundLabel = getRoundLabel(roundIndex, bonuses.length);
+  const nextRoundLabel = getRoundLabel(roundIndex + 1, bonuses.length);
 
   return (
     <TechSharingDisplay
-      normalSharingBonus={currentRoundBonuses.normal}
-      yengiiSharingBonus={props.hasYengii ? currentRoundBonuses.yengii : null}
+      normalSharingBonus={currentRoundBonuses?.normal ?? 0}
+      yengiiSharingBonus={
+        props.factions.has("yengii") ? currentRoundBonuses?.yengii ?? 0 : null
+      }
     >
       {phase === "trade" ? (
-        <Trade
-          roundLabel={roundIndex + 1}
+        <TradePhase
+          roundLabel={roundLabel}
           timeLimit={props.timeLimit}
           onFinished={setEconomy}
-        ></Trade>
-      ) : null}
+        />
+      ) : phase === "economy" ? (
+        <EconomyPhase onFinished={setConfluence} roundLabel={roundLabel} />
+      ) : phase === "confluence" ? (
+        <ConfluencePhase
+          onFinished={nextRound}
+          roundLabel={roundLabel}
+          nextRoundLabel={nextRoundLabel}
+          factions={props.factions}
+        />
+      ) : (
+        assertNever(phase)
+      )}
     </TechSharingDisplay>
   );
 };

@@ -11,9 +11,10 @@ main.main-menu h2 {
 #main-menu-buttons {
   display: flex;
   flex-direction: column;
+  margin: 5pt;
 }
 
-#new-game-buttons,
+#faction-select-buttons,
 #timer-settings-row {
   display: flex;
   flex-direction: row;
@@ -22,13 +23,17 @@ main.main-menu h2 {
 
 .main-menu-button {
   flex: 1;
-  margin: 5pt;
-  padding: 1.5em;
+  padding: 2em;
   font-size: 1.25rem;
+  margin: 5pt;
   background-color: transparent;
   color: white;
   border-radius: 20px;
   border: medium solid lightgray;
+}
+
+#faction-select-buttons .main-menu-button {
+  min-width: 30%;
 }
 
 .main-menu-button-active {
@@ -37,4 +42,10 @@ main.main-menu h2 {
 
 .main-menu-button:hover {
   background-color: #ffffff20;
+}
+
+.main-menu-button:disabled {
+  border: medium solid rgb(92, 92, 92);
+  color: rgb(92, 92, 92);
+  background-color: transparent;
 }

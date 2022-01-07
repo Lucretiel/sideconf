@@ -4,6 +4,7 @@ specifiers:
   '@testing-library/jest-dom': ^5.16.1
   '@testing-library/react': ^12.1.2
   '@testing-library/user-event': ^13.5.0
+  '@types/dom-screen-wake-lock': ^1.0.0
   '@types/jest': ^27.4.0
   '@types/lodash': ^4.14.178
   '@types/node': ^16.11.17
@@ -22,6 +23,7 @@ dependencies:
   '@testing-library/jest-dom': 5.16.1
   '@testing-library/react': 12.1.2_react-dom@17.0.2+react@17.0.2
   '@testing-library/user-event': 13.5.0
+  '@types/dom-screen-wake-lock': 1.0.0
   '@types/jest': 27.4.0
   '@types/lodash': 4.14.178
   '@types/node': 16.11.18
@@ -2009,6 +2011,10 @@ packages:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
       '@types/node': 16.11.18
+    dev: false
+
+  /@types/dom-screen-wake-lock/1.0.0:
+    resolution: {integrity: sha512-3o5jkfJsuhFcKj2EZ3PiEoiQQbB3J/nffsXJBKtyubkBHsX2siS6b4uij3ukr5xgDHsF4BaT9fHo8DneAw/YxA==}
     dev: false
 
   /@types/eslint-scope/3.7.2:

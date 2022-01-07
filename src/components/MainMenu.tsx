@@ -1,6 +1,14 @@
 import classNames from "classnames";
-import { useState } from "react";
-import { PlayerCount, playerCounts } from "../rules/player_counts";
+import lodash from "lodash";
+import { useCallback, useState } from "react";
+import {
+  allFactionIds,
+  allFactions,
+  FactionID,
+  FactionSet,
+  PlayerCount,
+  TradeTimeLimit,
+} from "../rules";
 import "./MainMenu.css";
 
 const IncludeFactionButton = ({
@@ -23,54 +31,82 @@ const IncludeFactionButton = ({
   );
 };
 
-// Utility function. Given a state setter for a bool, create a function that
-// inverts that bool's state
-const boolStateInverter =
-  (setState: (update: (current: boolean) => boolean) => void) => () =>
-    setState((current) => !current);
+const useSet = <T,>(): [
+  Set<T>,
+  (value: T, update: boolean | ((current: boolean) => boolean)) => void
+] => {
+  const [set, updateSet] = useState<Set<T>>(new Set());
+
+  const updateSetField = useCallback(
+    (value: T, update: boolean | ((current: boolean) => boolean)) => {
+      updateSet((set) => {
+        const exists = set.has(value);
+        const shouldExist =
+          update === true || update === false ? update : update(exists);
+
+        if (exists === shouldExist) {
+          return set;
+        }
+
+        const newSet = new Set(set);
+
+        if (shouldExist) {
+          newSet.add(value);
+        } else {
+          newSet.delete(value);
+        }
+
+        return newSet;
+      });
+    },
+    []
+  );
+
+  return [set, updateSetField];
+};
 
 // Main Menu component for starting a new game. Also includes credits etc
-const MainMenu = (props: {
-  onNewGame: (
-    playerCount: PlayerCount,
-    withYengii: boolean,
-    withZeth: boolean,
-    tradeTimerMillis: number
-  ) => void;
+const MainMenu = ({
+  onNewGame,
+}: {
+  onNewGame: (factions: FactionSet, tradeTimerMillis: TradeTimeLimit) => void;
 }) => {
-  const { onNewGame } = props;
-  const [hasYengii, setHasYengii] = useState(false);
-  const [hasZeth, setHasZeth] = useState(false);
-  const [tradeTimer, setTradeTimer] = useState(10 * 60 * 1000);
+  const [factions, updateFactions] = useSet<FactionID>();
+  const [tradeTimer, setTradeTimer] = useState<TradeTimeLimit>(10 * 60 * 1000);
 
   return (
     <main className="main-menu">
       <h1>Sidereal Confluence</h1>
       <h2>Unofficial Assistant</h2>
       <div id="main-menu-buttons">
-        <div id="new-game-buttons">
-          {playerCounts.map((playerCount) => (
+        <div id="faction-select-buttons">
+          {allFactionIds.map((faction) => (
             <button
-              className="main-menu-button"
-              key={playerCount}
-              onClick={() =>
-                onNewGame(playerCount, hasYengii, hasZeth, tradeTimer)
-              }
+              className={classNames(
+                "main-menu-button",
+                "faction-select-button",
+                {
+                  "main-menu-button-active": factions.has(faction),
+                }
+              )}
+              key={faction}
+              onClick={() => updateFactions(faction, (present) => !present)}
             >
-              {playerCount} players
+              {allFactions[faction].name}
             </button>
           ))}
         </div>
-        <IncludeFactionButton
-          name="Yengii"
-          included={hasYengii}
-          toggle={boolStateInverter(setHasYengii)}
-        />
-        <IncludeFactionButton
-          name="Zeth"
-          included={hasZeth}
-          toggle={boolStateInverter(setHasZeth)}
-        />
+        <button
+          className="new-game-button main-menu-button"
+          disabled={factions.size < 4}
+          onClick={() => {
+            if (factions.size >= 4) {
+              onNewGame(factions, tradeTimer);
+            }
+          }}
+        >
+          New Game
+        </button>
         <div id="timer-settings-row">
           <button
             onClick={() => setTradeTimer(2 * 60 * 1000)}
@@ -95,6 +131,14 @@ const MainMenu = (props: {
             })}
           >
             15 Minutes
+          </button>
+          <button
+            onClick={() => setTradeTimer("unlimited")}
+            className={classNames("main-menu-button", {
+              "main-menu-button-active": tradeTimer === "unlimited",
+            })}
+          >
+            Unlimited
           </button>
         </div>
       </div>

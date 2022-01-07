@@ -2,11 +2,15 @@
 // the entire reason I wanted to make this app in the first place). Also shows
 // various game info like sharing bonus.
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { start } from "repl";
+import classNames from "classnames";
+import { useCallback, useEffect, useState } from "react";
 import assertNever from "../../assertNever";
 import useClock from "../../hooks/useClock";
-import "./Trade.css";
+import useDocumentHidden from "../../hooks/useDocumentHidden";
+import useWakeLock from "../../hooks/useWakeLock";
+import { TradeTimeLimit } from "../../rules";
+import "./Phase.css";
+import "./TradePhase.css";
 
 type TimerState = "ready" | "running" | "paused" | "done";
 
@@ -39,19 +43,15 @@ const floatSecondsFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
 });
 
-const Trade = ({
+const TradePhaseTimer = ({
   timeLimit,
-  onFinished,
-  roundLabel,
+  onExpired,
 }: {
   // How much time in the trading phase, in millis
   timeLimit: number;
 
-  // Function to be called when the trading phase is complete
-  onFinished: () => void;
-
-  // The round number (1 - 6)
-  roundLabel: number;
+  // Function to be called when the timer runs out
+  onExpired: () => void;
 }) => {
   const [state, setTimerState] = useState<TimerState>("ready");
 
@@ -63,9 +63,6 @@ const Trade = ({
   // running, use this and the clock to find the true elapsed time
   const [timerStartedAt, setTimerStartedAt] = useState(() => Date.now());
 
-  // Call this to start or resume the timer counting down. The rendered UI
-  // should take care to make it impossible to call this if the timer is in
-  // the running or done states
   const startTimer = useCallback(() => {
     const now = Date.now();
 
@@ -81,27 +78,29 @@ const Trade = ({
     setTimerState("paused");
   }, [timerStartedAt]);
 
-  // Call this when the timer expires, or when the player skips to the end of
-  // the phase
-  const completeTimer = useCallback(() => {
-    setTimerState("done");
-  }, []);
-
-  // This effect controls the transition to the done state (and the sounding
-  // of the alarm) when the timer expires
+  // This effect controls everything that happens when the timer expires
   useEffect(() => {
     if (state === "running") {
       const timeRemaining = timeLimit - staticTimeElapsed;
       const id = setTimeout(() => {
         // TODO: Make some noise here
         setTimerState("done");
+        onExpired();
       }, timeRemaining);
       return () => clearTimeout(id);
     }
-  }, [state, timeLimit, staticTimeElapsed]);
+  }, [state, timeLimit, staticTimeElapsed, onExpired]);
 
-  // The current time
-  const now = useClock(state === "running" ? 50 : null);
+  // This manages awareness of the window focus state
+  const documentHidden = useDocumentHidden();
+
+  const live = !documentHidden && state == "running";
+
+  // Try to keep the screen from turning off if the clock is running
+  useWakeLock(live);
+
+  // The current time. This also allows for ticking the clock
+  const now = useClock(live ? 50 : null);
 
   // Compute time remaining
   const timeRemaining =
@@ -117,34 +116,80 @@ const Trade = ({
 
   const { minutes, seconds } = clockify(timeRemaining);
 
-  const buttons = [];
-
+  const clockClass = classNames("clock", {
+    "pause-blink": state === "paused" || state === "done",
+  });
   return (
     <div>
-      <h1 className="phase-title">
-        Round {roundLabel} Trading Phase
-        {state === "paused" ? "(Paused)" : state === "done" ? "(Complete)" : ""}
-      </h1>
       {minutes > 0 ? (
-        <div id="clock">
+        <div className={clockClass}>
           <span key="minutes" id="minutes">
             {minutes}
           </span>
-          :
+          <span>:</span>
           <span key="seconds" id="seconds">
             {integerSecondsFormatter.format(seconds)}
           </span>
         </div>
       ) : (
-        <div id="clock">
+        <div className={clockClass}>
           <span key="seconds" id="seconds">
             {floatSecondsFormatter.format(seconds)}
           </span>
         </div>
       )}
-      <button onClick={startTimer}>Start</button>
+      {state !== "done" ? (
+        <button
+          className="phase-control-button"
+          onClick={
+            state === "ready" || state === "paused"
+              ? startTimer
+              : state === "running"
+              ? pauseTimer
+              : assertNever(state)
+          }
+        >
+          {state === "ready"
+            ? "Start"
+            : state === "running"
+            ? "Pause"
+            : state === "paused"
+            ? "Resume"
+            : assertNever(state)}
+        </button>
+      ) : null}
     </div>
   );
 };
 
-export default Trade;
+const TradePhase = ({
+  timeLimit,
+  onFinished,
+  roundLabel,
+}: {
+  // How much time in the trading phase, in millis
+  timeLimit: TradeTimeLimit;
+
+  // Function to be called when the trading phase is complete
+  onFinished: () => void;
+
+  roundLabel: string;
+}) => {
+  const [timerExpired, updateTimerExpired] = useState(false);
+  const title = `${roundLabel} Trading Phase`;
+  const setTimerExpired = useCallback(() => updateTimerExpired(true), []);
+
+  return (
+    <main>
+      <h1>{title}</h1>
+      {timeLimit !== "unlimited" ? (
+        <TradePhaseTimer onExpired={setTimerExpired} timeLimit={timeLimit} />
+      ) : null}
+      <button className="phase-control-button" onClick={onFinished}>
+        {timerExpired ? "Economy Phase" : "Skip"}
+      </button>
+    </main>
+  );
+};
+
+export default TradePhase;

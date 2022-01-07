@@ -1,0 +1,31 @@
+main.phase-container {
+  display: flex;
+  flex-direction: column;
+  font-size: 2em;
+}
+
+main.phase-container h1 {
+  font-size: 1.5em;
+  text-align: center;
+}
+
+main.phase-container h2 {
+  font-size: 1.25em;
+  text-align: center;
+  margin-top: 0;
+}
+
+.phase-control-button {
+  padding: 2em;
+  font-size: 2rem;
+  margin: 5pt;
+  background-color: transparent;
+  color: white;
+  border-radius: 20px;
+  border: medium solid lightgray;
+  width: 100%;
+}
+
+.phase-control-button:hover {
+  background-color: #ffffff20;
+}

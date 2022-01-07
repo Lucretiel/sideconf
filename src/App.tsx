@@ -1,19 +1,15 @@
 import { useState } from "react";
-import logo from "./logo.svg";
 import "./App.css";
-import { PlayerCount, playerCounts } from "./rules/player_counts";
+import { FactionID, PlayerCount, TradeTimeLimit } from "./rules";
 import MainMenu from "./components/MainMenu";
 import assertNever from "./assertNever";
 import Game from "./components/Game/Game";
-import { BrowserRouter } from "react-router-dom";
 
 type AppState = "menu" | "game";
 
 const App = () => {
-  const [playerCount, setPlayerCount] = useState<PlayerCount>(4);
-  const [hasYengii, setHasYengii] = useState(false);
-  const [hasZeth, setHasZeth] = useState(false);
-  const [tradeTimer, setTradeTimer] = useState(10 * 60 * 1000);
+  const [factions, setFactions] = useState<Set<FactionID>>(new Set());
+  const [tradeTimer, setTradeTimer] = useState<TradeTimeLimit>(10 * 60 * 1000);
   const [state, setAppState] = useState<AppState>("menu");
 
   // TODO: use react router and move most of this state to the URL
@@ -21,11 +17,9 @@ const App = () => {
   if (state === "menu") {
     return (
       <MainMenu
-        onNewGame={(playerCount, withYengii, withZeth, tradeTimer) => {
-          setPlayerCount(playerCount);
-          setHasYengii(withYengii);
-          setHasZeth(withZeth);
-          setTradeTimer(tradeTimer);
+        onNewGame={(factions, tradeTimeLimit) => {
+          setFactions(factions);
+          setTradeTimer(tradeTimeLimit);
           setAppState("game");
         }}
       ></MainMenu>
@@ -33,9 +27,7 @@ const App = () => {
   } else if (state === "game") {
     return (
       <Game
-        playerCount={playerCount}
-        hasYengii={hasYengii}
-        hasZeth={hasZeth}
+        factions={factions}
         timeLimit={tradeTimer}
         onGameFinished={() => setAppState("menu")}
       ></Game>

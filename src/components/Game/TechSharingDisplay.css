@@ -16,13 +16,26 @@
 }
 
 .sharing-bonus {
-  font-size: 8rem;
+  --blue-point-1: rgb(31, 31, 146);
+  --blue-point-2: rgb(65, 40, 153);
+  --size: 10rem;
+
+  font-size: 7rem;
+  line-height: var(--size);
   border-radius: 50%;
-  width: 9rem;
-  height: 9rem;
-  background-color: purple;
+  width: var(--size);
   text-align: center;
-  align-content: center;
-  justify-content: center;
   margin: 0 auto;
+  background: radial-gradient(
+      circle at center,
+      var(--blue-point-1),
+      transparent
+    ),
+    repeating-conic-gradient(
+      var(--blue-point-1) 0,
+      var(--blue-point-2) 4deg,
+      var(--blue-point-1) 8deg
+    );
+  border: solid thick rgb(31, 31, 31);
+  text-shadow: 0 0 10pt black;
 }

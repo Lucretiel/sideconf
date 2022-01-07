@@ -1,0 +1,15 @@
+.clock {
+  font-size: 6em;
+  text-align: center;
+  margin: 0.2em 0;
+}
+
+.pause-blink {
+  animation: pause-blink 2s step-end infinite;
+}
+
+@keyframes pause-blink {
+  50% {
+    opacity: 40%;
+  }
+}
