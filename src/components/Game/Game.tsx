@@ -12,7 +12,7 @@ import EconomyPhase from "./EconomyPhase";
 import TechSharingDisplay from "./TechSharingDisplay";
 import TradePhase from "./TradePhase";
 
-type Phase = "trade" | "economy" | "confluence";
+type Phase = "trade" | "economy" | "confluence" | "scoring";
 
 const getRoundLabel = (roundIndex: number, maxRounds: number) =>
   roundIndex + 1 >= maxRounds ? "Final" : `Round ${roundIndex + 1}`;
@@ -24,21 +24,17 @@ const Game = (props: {
   onGameFinished: () => void;
 }) => {
   const [roundIndex, setRoundIndex] = useState(0);
-
   const [phase, setPhase] = useState<Phase>("trade");
-  const setTrade = useCallback(() => setPhase("trade"), []);
-  const setEconomy = useCallback(() => setPhase("economy"), []);
-  const setConfluence = useCallback(() => setPhase("confluence"), []);
-
-  const nextRound = useCallback(() => {
-    setPhase("trade");
-    setRoundIndex((round) => round + 1);
-  }, []);
 
   const bonuses = getSharingBonuses(props.factions.size);
   const currentRoundBonuses = bonuses[roundIndex];
+  const maxRounds = bonuses.length;
+  const lastRound = roundIndex + 1 === maxRounds;
 
-  const roundLabel = getRoundLabel(roundIndex, bonuses.length);
+  const roundLabel = getRoundLabel(
+    phase === "confluence" ? roundIndex + 1 : roundIndex,
+    bonuses.length
+  );
   const nextRoundLabel = getRoundLabel(roundIndex + 1, bonuses.length);
 
   return (
@@ -52,13 +48,21 @@ const Game = (props: {
         <TradePhase
           roundLabel={roundLabel}
           timeLimit={props.timeLimit}
-          onFinished={setEconomy}
+          onFinished={() => setPhase("economy")}
         />
       ) : phase === "economy" ? (
-        <EconomyPhase onFinished={setConfluence} roundLabel={roundLabel} />
+        <EconomyPhase
+          onFinished={
+            lastRound ? () => setPhase("scoring") : () => setPhase("confluence")
+          }
+          roundLabel={roundLabel}
+        />
       ) : phase === "confluence" ? (
         <ConfluencePhase
-          onFinished={nextRound}
+          onFinished={() => {
+            setPhase("trade");
+            setRoundIndex((index) => index + 1);
+          }}
           roundLabel={roundLabel}
           nextRoundLabel={nextRoundLabel}
           factions={props.factions}

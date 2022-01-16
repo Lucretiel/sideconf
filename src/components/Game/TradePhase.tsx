@@ -71,8 +71,7 @@ const TradePhaseTimer = ({
   }, []);
 
   const pauseTimer = useCallback(() => {
-    const now = Date.now();
-    const elapsed = now - timerStartedAt;
+    const elapsed = Date.now() - timerStartedAt;
 
     setStaticTimeElapsed((original) => original + elapsed);
     setTimerState("paused");
@@ -81,15 +80,15 @@ const TradePhaseTimer = ({
   // This effect controls everything that happens when the timer expires
   useEffect(() => {
     if (state === "running") {
-      const timeRemaining = timeLimit - staticTimeElapsed;
       const id = setTimeout(() => {
         // TODO: Make some noise here
         setTimerState("done");
         onExpired();
-      }, timeRemaining);
+      }, timeLimit - (staticTimeElapsed + (Date.now() - timerStartedAt)));
+
       return () => clearTimeout(id);
     }
-  }, [state, timeLimit, staticTimeElapsed, onExpired]);
+  }, [state, timeLimit, timerStartedAt, staticTimeElapsed, onExpired]);
 
   // This manages awareness of the window focus state
   const documentHidden = useDocumentHidden();
@@ -180,13 +179,15 @@ const TradePhase = ({
   const setTimerExpired = useCallback(() => updateTimerExpired(true), []);
 
   return (
-    <main>
+    <main className="phase-container">
       <h1>{title}</h1>
       {timeLimit !== "unlimited" ? (
         <TradePhaseTimer onExpired={setTimerExpired} timeLimit={timeLimit} />
-      ) : null}
+      ) : (
+        <span className="big-text">No Time Limit</span>
+      )}
       <button className="phase-control-button" onClick={onFinished}>
-        {timerExpired ? "Economy Phase" : "Skip"}
+        {timerExpired || timeLimit === "unlimited" ? "Economy Phase" : "Skip"}
       </button>
     </main>
   );

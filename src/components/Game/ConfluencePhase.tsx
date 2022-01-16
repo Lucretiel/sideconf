@@ -45,7 +45,7 @@ const StealingContent = () => (
   <article>
     <h2>Zeth Steal</h2>
     <p>
-      The Zeth (Pink) player may use <span className="zeth-arrow">🡆</span>{" "}
+      Zeth (Pink) player may use <span className="zeth-arrow">🡆</span>{" "}
       converters to steal from players that they didn't trade with this round.
     </p>
   </article>
@@ -73,7 +73,7 @@ const ConfluencePhase = ({
 
   return (
     <main className="phase-container">
-      <h1 className="phase-title">{roundLabel} Confluence Phase</h1>
+      <h1>{roundLabel} Confluence Phase</h1>
       {subPhase === "sharing" ? (
         <SharingContent hasYengii={factions.has("yengii")} />
       ) : subPhase === "bidding" ? (

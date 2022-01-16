@@ -1,7 +1,8 @@
 .clock {
-  font-size: 6em;
+  font-size: 5em;
   text-align: center;
   margin: 0.2em 0;
+  white-space: nowrap;
 }
 
 .pause-blink {

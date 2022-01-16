@@ -5,7 +5,7 @@ main.phase-container {
 }
 
 main.phase-container h1 {
-  font-size: 1.5em;
+  font-size: 1.75em;
   text-align: center;
 }
 
@@ -28,4 +28,10 @@ main.phase-container h2 {
 
 .phase-control-button:hover {
   background-color: #ffffff20;
+}
+
+.big-text {
+  font-size: 2em;
+  margin: 0 auto;
+  padding-bottom: 1em;
 }
