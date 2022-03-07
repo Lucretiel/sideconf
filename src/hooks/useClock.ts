@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // current time. In addition, it sets up an effect that causes the component
 // to re-render every `interval` ms, if given.
 const useClock = (interval: number | null): number => {
-  const [_tick, setTick] = useState(0);
+  const [_, setTick] = useState(0);
 
   useEffect(() => {
     if (interval !== null) {

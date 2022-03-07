@@ -1,19 +1,13 @@
 import "./Phase.css";
 
-const EconomyPhase = ({
-  roundLabel,
-  onFinished,
-}: {
-  roundLabel: string;
-  onFinished: () => void;
-}) => (
+const ScoringPhase = ({ onFinished }: { onFinished: () => void }) => (
   <main className="phase-container">
-    <h1>{roundLabel} Economy Phase</h1>
-    <article className="big-text">Run all 🡆 converters</article>
+    <h1>Scoring</h1>
+    <article className="big-text">Score</article>
     <button onClick={onFinished} className="phase-control-button">
       Finished
     </button>
   </main>
 );
 
-export default EconomyPhase;
+export default ScoringPhase;

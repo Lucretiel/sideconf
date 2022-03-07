@@ -1,35 +1,13 @@
 import classNames from "classnames";
-import lodash from "lodash";
 import { useCallback, useState } from "react";
 import {
   allFactionIds,
   allFactions,
   FactionID,
   FactionSet,
-  PlayerCount,
   TradeTimeLimit,
 } from "../rules";
 import "./MainMenu.css";
-
-const IncludeFactionButton = ({
-  name,
-  included,
-  toggle,
-}: {
-  name: string;
-  included: boolean;
-  toggle: () => void;
-}) => {
-  const className = classNames("main-menu-button", {
-    "main-menu-button-active": included,
-  });
-
-  return (
-    <button onClick={toggle} className={className}>
-      {included ? "Includes" : "No"} {name}
-    </button>
-  );
-};
 
 const useSet = <T,>(): [
   Set<T>,
@@ -69,7 +47,7 @@ const useSet = <T,>(): [
 const MainMenu = ({
   onNewGame,
 }: {
-  onNewGame: (factions: FactionSet, tradeTimerMillis: TradeTimeLimit) => void;
+  onNewGame: (factions: FactionSet, tradeTimer: TradeTimeLimit) => void;
 }) => {
   const [factions, updateFactions] = useSet<FactionID>();
   const [tradeTimer, setTradeTimer] = useState<TradeTimeLimit>(10 * 60 * 1000);

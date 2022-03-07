@@ -1,5 +1,3 @@
-import { round } from "lodash";
-import { useState } from "react";
 import assertNever from "../../assertNever";
 import { FactionSet } from "../../rules";
 import "./Phase.css";
@@ -45,30 +43,32 @@ const StealingContent = () => (
   <article>
     <h2>Zeth Steal</h2>
     <p>
-      Zeth (Pink) player may use <span className="zeth-arrow">🡆</span>{" "}
-      converters to steal from players that they didn't trade with this round.
+      Zeth (Pink) player may use <span className="zeth">🡆</span> converters to
+      steal from players that they didn't trade with this round.
     </p>
   </article>
 );
 
 const ConfluencePhase = ({
+  subPhase,
+  toSubPhase,
   roundLabel,
   nextRoundLabel,
   onFinished,
   factions,
 }: {
+  subPhase: SubPhase;
+  toSubPhase: (subPhase: SubPhase) => void;
   roundLabel: string;
   nextRoundLabel: string;
   onFinished: () => void;
   factions: FactionSet;
 }) => {
-  const [subPhase, setSubPhase] = useState<SubPhase>("sharing");
-
   const nextStep =
     subPhase === "sharing"
-      ? () => setSubPhase("bidding")
+      ? () => toSubPhase("bidding")
       : subPhase === "bidding" && factions.has("zeth")
-      ? () => setSubPhase("stealing")
+      ? () => toSubPhase("stealing")
       : onFinished;
 
   return (

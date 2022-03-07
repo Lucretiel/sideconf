@@ -38,7 +38,7 @@ export const allFactions: Record<FactionID, FactionData> = {
     shorthandName: "Im'dril",
   },
   eniet: {
-    name: "Eni      Et",
+    name: "Eni Et",
     shorthandName: "Eni Et",
   },
   unity: {
@@ -67,8 +67,8 @@ export const allFactionIds: FactionID[] = [
   "zeth",
 ];
 
-// Acceptable player counts in a Sidereal game
-export type PlayerCount = 4 | 5 | 6 | 7 | 8 | 9;
+export const validPlayerCount = (count: number): boolean =>
+  sharingTable[count] !== undefined;
 
 // Type containing things that are different for yengii
 export type YengiiVariant<T> = { normal: T; yengii: T };
@@ -128,7 +128,7 @@ export const getSharingBonuses = (
   playerCount: number
 ): YengiiVariant<number>[] => {
   let value = sharingTable[playerCount];
-  if (value == undefined) {
+  if (value === undefined) {
     throw new Error("Invalid player count");
   }
   return value;
@@ -136,3 +136,18 @@ export const getSharingBonuses = (
 
 /// The amount of time trade can last, in milliseconds
 export type TradeTimeLimit = number | "unlimited";
+
+/// The phases of the game. Note that confluence has several sub-phases.
+export type MainPhase = "trade" | "economy" | "confluence" | "scoring";
+
+/// The phases that can exist during confluence
+export type SubPhase = "sharing" | "bidding" | "stealing";
+
+export type Phase =
+  | {
+      main: "trade" | "economy" | "scoring";
+    }
+  | {
+      main: "confluence";
+      subPhase: SubPhase;
+    };

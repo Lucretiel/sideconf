@@ -93,7 +93,7 @@ const TradePhaseTimer = ({
   // This manages awareness of the window focus state
   const documentHidden = useDocumentHidden();
 
-  const live = !documentHidden && state == "running";
+  const live = !documentHidden && state === "running";
 
   // Try to keep the screen from turning off if the clock is running
   useWakeLock(live);

@@ -1,74 +1,96 @@
-import { round } from "lodash";
-import { useCallback, useState } from "react";
 import assertNever from "../../assertNever";
 import {
-  PlayerCount,
   getSharingBonuses,
   FactionSet,
   TradeTimeLimit,
+  Phase,
+  SubPhase,
 } from "../../rules";
 import ConfluencePhase from "./ConfluencePhase";
 import EconomyPhase from "./EconomyPhase";
+import ScoringPhase from "./Scoring";
 import TechSharingDisplay from "./TechSharingDisplay";
 import TradePhase from "./TradePhase";
 
-type Phase = "trade" | "economy" | "confluence" | "scoring";
+const getRoundLabel = (round: number, maxRounds: number) =>
+  round >= maxRounds ? "Final" : `Round ${round}`;
 
-const getRoundLabel = (roundIndex: number, maxRounds: number) =>
-  roundIndex + 1 >= maxRounds ? "Final" : `Round ${roundIndex + 1}`;
-
-// Top level component for a game in progress.
-const Game = (props: {
+// Top level component for a game in progress. Manages transitions between
+// rounds & phases.
+const Game = ({
+  timeLimit,
+  round,
+  transitionTo,
+  toMainMenu,
+  factions,
+  phase,
+}: {
   factions: FactionSet;
   timeLimit: TradeTimeLimit;
-  onGameFinished: () => void;
+  round: number;
+  transitionTo: (to: { round?: number; phase: Phase }) => void;
+  toMainMenu: () => void;
+  phase: Phase;
 }) => {
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [phase, setPhase] = useState<Phase>("trade");
+  const bonuses = getSharingBonuses(factions.size);
+  const currentRoundBonuses = bonuses[round - 1];
 
-  const bonuses = getSharingBonuses(props.factions.size);
-  const currentRoundBonuses = bonuses[roundIndex];
+  if (currentRoundBonuses === undefined) {
+    throw new Error(`Invalid round ${round}`);
+  }
+
   const maxRounds = bonuses.length;
-  const lastRound = roundIndex + 1 === maxRounds;
+  const lastRound = round >= maxRounds;
 
   const roundLabel = getRoundLabel(
-    phase === "confluence" ? roundIndex + 1 : roundIndex,
-    bonuses.length
+    round,
+    phase.main === "confluence" ? maxRounds - 1 : maxRounds
   );
-  const nextRoundLabel = getRoundLabel(roundIndex + 1, bonuses.length);
+  const nextRoundLabel = getRoundLabel(round + 1, bonuses.length);
 
   return (
     <TechSharingDisplay
       normalSharingBonus={currentRoundBonuses?.normal ?? 0}
       yengiiSharingBonus={
-        props.factions.has("yengii") ? currentRoundBonuses?.yengii ?? 0 : null
+        factions.has("yengii") ? currentRoundBonuses?.yengii ?? 0 : null
       }
     >
-      {phase === "trade" ? (
+      {phase.main === "trade" ? (
         <TradePhase
           roundLabel={roundLabel}
-          timeLimit={props.timeLimit}
-          onFinished={() => setPhase("economy")}
+          timeLimit={timeLimit}
+          onFinished={() => transitionTo({ phase: { main: "economy" } })}
         />
-      ) : phase === "economy" ? (
+      ) : phase.main === "economy" ? (
         <EconomyPhase
           onFinished={
-            lastRound ? () => setPhase("scoring") : () => setPhase("confluence")
+            lastRound
+              ? () => transitionTo({ phase: { main: "scoring" } })
+              : () =>
+                  transitionTo({
+                    phase: { main: "confluence", subPhase: "sharing" },
+                  })
           }
           roundLabel={roundLabel}
+          lastRound={lastRound}
         />
-      ) : phase === "confluence" ? (
+      ) : phase.main === "confluence" ? (
         <ConfluencePhase
-          onFinished={() => {
-            setPhase("trade");
-            setRoundIndex((index) => index + 1);
-          }}
+          subPhase={phase.subPhase}
+          toSubPhase={(subPhase: SubPhase) =>
+            transitionTo({ phase: { main: "confluence", subPhase } })
+          }
+          onFinished={() =>
+            transitionTo({ phase: { main: "trade" }, round: round + 1 })
+          }
           roundLabel={roundLabel}
           nextRoundLabel={nextRoundLabel}
-          factions={props.factions}
+          factions={factions}
         />
+      ) : phase.main === "scoring" ? (
+        <ScoringPhase onFinished={toMainMenu} />
       ) : (
-        assertNever(phase)
+        assertNever(phase.main)
       )}
     </TechSharingDisplay>
   );
