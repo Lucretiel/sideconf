@@ -1,46 +1,28 @@
 import classNames from "classnames";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   allFactionIds,
   allFactions,
-  FactionID,
+  FactionId,
   FactionSet,
+  FactionType,
   TradeTimeLimit,
 } from "../rules";
 import "./MainMenu.css";
+import useMap from "../hooks/useMap";
+import assertNever from "../assertNever";
 
-const useSet = <T,>(): [
-  Set<T>,
-  (value: T, update: boolean | ((current: boolean) => boolean)) => void
-] => {
-  const [set, updateSet] = useState<Set<T>>(new Set());
+const getFactionName = (faction: FactionId, factions: FactionSet) => {
+  const names = allFactions[faction];
+  const type = factions.get(faction);
 
-  const updateSetField = useCallback(
-    (value: T, update: boolean | ((current: boolean) => boolean)) => {
-      updateSet((set) => {
-        const exists = set.has(value);
-        const shouldExist =
-          update === true || update === false ? update : update(exists);
-
-        if (exists === shouldExist) {
-          return set;
-        }
-
-        const newSet = new Set(set);
-
-        if (shouldExist) {
-          newSet.add(value);
-        } else {
-          newSet.delete(value);
-        }
-
-        return newSet;
-      });
-    },
-    []
-  );
-
-  return [set, updateSetField];
+  return type === "base"
+    ? names.baseName
+    : type === "expansion"
+    ? names.expansionName
+    : type === undefined
+    ? names.baseName
+    : assertNever(type);
 };
 
 // Main Menu component for starting a new game. Also includes credits etc
@@ -49,7 +31,10 @@ const MainMenu = ({
 }: {
   onNewGame: (factions: FactionSet, tradeTimer: TradeTimeLimit) => void;
 }) => {
-  const [factions, updateFactions] = useSet<FactionID>();
+  const [factions, { update: updateFactions }] = useMap<
+    FactionId,
+    FactionType
+  >();
   const [tradeTimer, setTradeTimer] = useState<TradeTimeLimit>(10 * 60 * 1000);
 
   return (
@@ -60,17 +45,25 @@ const MainMenu = ({
         <div id="faction-select-buttons">
           {allFactionIds.map((faction) => (
             <button
-              className={classNames(
-                "main-menu-button",
-                "faction-select-button",
-                {
-                  "main-menu-button-active": factions.has(faction),
-                }
-              )}
+              className={classNames({
+                "main-menu-button": true,
+                "faction-select-button": true,
+                "main-menu-button-active": factions.has(faction),
+              })}
               key={faction}
-              onClick={() => updateFactions(faction, (present) => !present)}
+              onClick={() =>
+                updateFactions(faction, (type) =>
+                  type === undefined
+                    ? "base"
+                    : type === "base"
+                    ? "expansion"
+                    : type === "expansion"
+                    ? undefined
+                    : assertNever(type)
+                )
+              }
             >
-              {allFactions[faction].name}
+              {getFactionName(faction, factions)}
             </button>
           ))}
         </div>
@@ -86,14 +79,6 @@ const MainMenu = ({
           New Game
         </button>
         <div id="timer-settings-row">
-          <button
-            onClick={() => setTradeTimer(2 * 60 * 1000)}
-            className={classNames("main-menu-button", {
-              "main-menu-button-active": tradeTimer === 2 * 60 * 1000,
-            })}
-          >
-            2 Minutes
-          </button>
           <button
             onClick={() => setTradeTimer(10 * 60 * 1000)}
             className={classNames("main-menu-button", {

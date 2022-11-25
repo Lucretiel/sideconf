@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
+import useAbortEffect from "./useAbortEffect";
 
 const useLocalStorage = (
   key: string
@@ -9,26 +10,25 @@ const useLocalStorage = (
 
   // Subscribe to out-of-band changes in the value, and ensure that key changes
   // are propagated
-  useEffect(() => {
-    setLocalValue(localStorage.getItem(key));
+  useAbortEffect(
+    useCallback(
+      (signal) => {
+        setLocalValue(localStorage.getItem(key));
 
-    const abort = new AbortController();
-
-    window.addEventListener(
-      "storage",
-      (event) => {
-        if (event.key === key) {
-          setLocalValue(event.newValue);
-        }
+        window.addEventListener(
+          "storage",
+          (event) => {
+            if (event.key === key) setLocalValue(event.newValue);
+          },
+          {
+            passive: true,
+            signal,
+          }
+        );
       },
-      {
-        passive: true,
-        signal: abort.signal,
-      }
-    );
-
-    return () => abort.abort();
-  }, [key]);
+      [key]
+    )
+  );
 
   // Ensure that setValue sends to localStorage, in addition to setState
   const setValue = useCallback(

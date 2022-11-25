@@ -1,10 +1,13 @@
 import assertNever from "../../assertNever";
 import {
-  getSharingBonuses,
   FactionSet,
-  TradeTimeLimit,
+  GameStep,
+  getSharingBonuses,
   Phase,
+  RoundId,
   SubPhase,
+  TradeTimeLimit,
+  Transition,
 } from "../../rules";
 import ConfluencePhase from "./ConfluencePhase";
 import EconomyPhase from "./EconomyPhase";
@@ -27,52 +30,34 @@ const Game = ({
 }: {
   factions: FactionSet;
   timeLimit: TradeTimeLimit;
-  round: number;
-  transitionTo: (to: { round?: number; phase: Phase }) => void;
+  round: RoundId;
+  transitionTo: (to: Transition) => void;
   toMainMenu: () => void;
   phase: Phase;
 }) => {
   const bonuses = getSharingBonuses(factions.size);
-  const currentRoundBonuses = bonuses[round - 1];
-
-  if (currentRoundBonuses === undefined) {
-    throw new Error(`Invalid round ${round}`);
-  }
-
-  const maxRounds = bonuses.length;
-  const lastRound = round >= maxRounds;
-
-  const roundLabel = getRoundLabel(
-    round,
-    phase.main === "confluence" ? maxRounds - 1 : maxRounds
-  );
-  const nextRoundLabel = getRoundLabel(round + 1, bonuses.length);
+  const currentRoundBonuses = bonuses[round];
+  const lastRound = round === 6;
 
   return (
     <TechSharingDisplay
-      normalSharingBonus={currentRoundBonuses?.normal ?? 0}
+      normalSharingBonus={currentRoundBonuses.normal}
       yengiiSharingBonus={
-        factions.has("yengii") ? currentRoundBonuses?.yengii ?? 0 : null
+        factions.has("yengii") ? currentRoundBonuses.yengii : null
       }
     >
       {phase.main === "trade" ? (
         <TradePhase
-          roundLabel={roundLabel}
+          round={round}
           timeLimit={timeLimit}
           onFinished={() => transitionTo({ phase: { main: "economy" } })}
         />
       ) : phase.main === "economy" ? (
         <EconomyPhase
-          onFinished={
-            lastRound
-              ? () => transitionTo({ phase: { main: "scoring" } })
-              : () =>
-                  transitionTo({
-                    phase: { main: "confluence", subPhase: "sharing" },
-                  })
+          onFinished={() =>
+            transitionTo({ phase: { main: "confluence", subPhase: "sharing" } })
           }
-          roundLabel={roundLabel}
-          lastRound={lastRound}
+          round={round}
         />
       ) : phase.main === "confluence" ? (
         <ConfluencePhase
@@ -81,14 +66,14 @@ const Game = ({
             transitionTo({ phase: { main: "confluence", subPhase } })
           }
           onFinished={() =>
-            transitionTo({ phase: { main: "trade" }, round: round + 1 })
+            transitionTo({
+              nextRound: true,
+              phase: { main: "trade" },
+            })
           }
-          roundLabel={roundLabel}
-          nextRoundLabel={nextRoundLabel}
+          round={round}
           factions={factions}
         />
-      ) : phase.main === "scoring" ? (
-        <ScoringPhase onFinished={toMainMenu} />
       ) : (
         assertNever(phase.main)
       )}

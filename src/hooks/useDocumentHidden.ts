@@ -1,21 +1,20 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import useAbortEffect from "./useAbortEffect";
 
 /// A hook that subscribes to document visibility. Returns false if
 /// document.visibilityState is "hidden".
 const useDocumentHidden = () => {
   const [hidden, setHidden] = useState(document.visibilityState === "hidden");
 
-  useEffect(() => {
-    const updateHidden = () => setHidden(document.visibilityState === "hidden");
-
-    document.addEventListener("visibilitychange", updateHidden, {
-      passive: true,
-    });
-
-    return () => {
-      document.removeEventListener("visibilitychange", updateHidden);
-    };
-  }, []);
+  useAbortEffect(
+    useCallback((signal: AbortSignal) => {
+      document.addEventListener(
+        "visibilitychange",
+        (ev) => setHidden(document.visibilityState === "hidden"),
+        { passive: true, signal }
+      );
+    }, [])
+  );
 
   return hidden;
 };
